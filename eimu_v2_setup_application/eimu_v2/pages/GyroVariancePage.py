@@ -17,6 +17,8 @@ class GyroVarianceFrame(tb.Frame):
     self.loop_count = 0
     self.no_of_samples = 1000
 
+    g.eimuV2.setWorldFrameId(1)
+
     self.gyrox_arr = []
     self.gyroy_arr = []
     self.gyroz_arr = []

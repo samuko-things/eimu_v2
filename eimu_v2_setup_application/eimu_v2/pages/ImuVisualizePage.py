@@ -33,6 +33,7 @@ class ImuVisualizeFrame(tb.Frame):
     # self.plot_elevation_angle = 60 
     # self.plot_horizontal_angle = 60
     
+    g.eimuV2.setWorldFrameId(1)
 
     self.label = tb.Label(self, text="VIZUALIZE IMU DATA", font=('Monospace',16, 'bold') ,bootstyle="dark")
   
@@ -49,47 +50,117 @@ class ImuVisualizeFrame(tb.Frame):
     buttonStyleName = 'primary.TButton'
     buttonStyle.configure(buttonStyleName, font=('Monospace',12,'bold'))
 
-    self.button = tb.Button(self, text="VISUALIZE RPY", style=buttonStyleName,
+    self.button = tb.Button(self, text="READ IMU DATA", style=buttonStyleName,
                              padding=20, command=self.runVisualization)
     
 
-    self.rollValFrame = tb.Frame(self)
-    self.pitchValFrame = tb.Frame(self)
-    self.yawValFrame = tb.Frame(self)
+    self.imuDisplayFrame = tb.Frame(self)
 
-    roll = g.eimuV2.readRPY(0)
-    pitch = g.eimuV2.readRPY(1)
-    yaw = g.eimuV2.readRPY(2)
+    self.orientationValFrame = tb.Frame(self.imuDisplayFrame)
+    self.rValFrame = tb.Frame(self.orientationValFrame)
+    self.pValFrame = tb.Frame(self.orientationValFrame)
+    self.yValFrame = tb.Frame(self.orientationValFrame)
 
-    self.rollText = tb.Label(self.rollValFrame, text="ROLL:", font=('Monospace',10, 'bold') ,bootstyle="danger")
-    self.rollVal = tb.Label(self.rollValFrame, text=f'{roll}', font=('Monospace',10), bootstyle="dark")
+    self.accelerationValFrame = tb.Frame(self.imuDisplayFrame)
+    self.axValFrame = tb.Frame(self.accelerationValFrame)
+    self.ayValFrame = tb.Frame(self.accelerationValFrame)
+    self.azValFrame = tb.Frame(self.accelerationValFrame)
 
-    self.pitchText = tb.Label(self.pitchValFrame, text="PITCH:", font=('Monospace',10, 'bold') ,bootstyle="success")
-    self.pitchVal = tb.Label(self.pitchValFrame, text=f'{pitch}', font=('Monospace',10), bootstyle="dark")
+    self.angularVelValFrame = tb.Frame(self.imuDisplayFrame)
+    self.gxValFrame = tb.Frame(self.angularVelValFrame)
+    self.gyValFrame = tb.Frame(self.angularVelValFrame)
+    self.gzValFrame = tb.Frame(self.angularVelValFrame)
 
-    self.yawText = tb.Label(self.yawValFrame, text="YAW:", font=('Monospace',10, 'bold') ,bootstyle="primary")
-    self.yawVal = tb.Label(self.yawValFrame, text=f'{yaw}', font=('Monospace',10), bootstyle="dark")
+    r = g.eimuV2.readRPY(0)
+    p = g.eimuV2.readRPY(1)
+    y = g.eimuV2.readRPY(2)
+
+    self.rText = tb.Label(self.rValFrame, text="R:", font=('Monospace',10, 'bold') ,bootstyle="danger")
+    self.rVal = tb.Label(self.rValFrame, text=f'{r}', font=('Monospace',10), bootstyle="dark")
+
+    self.pText = tb.Label(self.pValFrame, text="P:", font=('Monospace',10, 'bold') ,bootstyle="success")
+    self.pVal = tb.Label(self.pValFrame, text=f'{p}', font=('Monospace',10), bootstyle="dark")
+
+    self.yText = tb.Label(self.yValFrame, text="Y:", font=('Monospace',10, 'bold') ,bootstyle="primary")
+    self.yVal = tb.Label(self.yValFrame, text=f'{y}', font=('Monospace',10), bootstyle="dark")
+
+    ax = g.eimuV2.readAcc(0)
+    ay = g.eimuV2.readAcc(1)
+    az = g.eimuV2.readAcc(2)
+
+    self.axText = tb.Label(self.axValFrame, text="AX:", font=('Monospace',10, 'bold') ,bootstyle="danger")
+    self.axVal = tb.Label(self.axValFrame, text=f'{ax}', font=('Monospace',10), bootstyle="dark")
+
+    self.ayText = tb.Label(self.ayValFrame, text="AY:", font=('Monospace',10, 'bold') ,bootstyle="success")
+    self.ayVal = tb.Label(self.ayValFrame, text=f'{ay}', font=('Monospace',10), bootstyle="dark")
+
+    self.azText = tb.Label(self.azValFrame, text="AZ:", font=('Monospace',10, 'bold') ,bootstyle="primary")
+    self.azVal = tb.Label(self.azValFrame, text=f'{az}', font=('Monospace',10), bootstyle="dark")
+
+    gx = g.eimuV2.readGyro(0)
+    gy = g.eimuV2.readGyro(1)
+    gz = g.eimuV2.readGyro(2)
+
+    self.gxText = tb.Label(self.axValFrame, text="GX:", font=('Monospace',10, 'bold') ,bootstyle="danger")
+    self.gxVal = tb.Label(self.axValFrame, text=f'{gx}', font=('Monospace',10), bootstyle="dark")
+
+    self.gyText = tb.Label(self.ayValFrame, text="GY:", font=('Monospace',10, 'bold') ,bootstyle="success")
+    self.gyVal = tb.Label(self.ayValFrame, text=f'{gy}', font=('Monospace',10), bootstyle="dark")
+
+    self.gzText = tb.Label(self.azValFrame, text="GZ:", font=('Monospace',10, 'bold') ,bootstyle="primary")
+    self.gzVal = tb.Label(self.azValFrame, text=f'{gz}', font=('Monospace',10), bootstyle="dark")
     
 
     #add created widgets to displayFrame
-    self.rollText.pack(side='left', fill='both')
-    self.rollVal.pack(side='left', expand=True, fill='both')
+    self.rText.pack(side='left', fill='both')
+    self.rVal.pack(side='left', expand=True, fill='both')
 
-    self.pitchText.pack(side='left', fill='both')
-    self.pitchVal.pack(side='left', expand=True, fill='both')
+    self.pText.pack(side='left', fill='both')
+    self.pVal.pack(side='left', expand=True, fill='both')
 
-    self.yawText.pack(side='left', fill='both')
-    self.yawVal.pack(side='left', expand=True, fill='both')
+    self.yText.pack(side='left', fill='both')
+    self.yVal.pack(side='left', expand=True, fill='both')
+
+    self.axText.pack(side='left', fill='both')
+    self.axVal.pack(side='left', expand=True, fill='both')
+
+    self.ayText.pack(side='left', fill='both')
+    self.ayVal.pack(side='left', expand=True, fill='both')
+
+    self.azText.pack(side='left', fill='both')
+    self.azVal.pack(side='left', expand=True, fill='both')
+
+    self.gxText.pack(side='left', fill='both')
+    self.gxVal.pack(side='left', expand=True, fill='both')
+
+    self.gyText.pack(side='left', fill='both')
+    self.gyVal.pack(side='left', expand=True, fill='both')
+
+    self.gzText.pack(side='left', fill='both')
+    self.gzVal.pack(side='left', expand=True, fill='both')
 
     #add created widgets to Frame
     self.label.pack(side='top', pady=(20,20))
     self.selectFrameId.pack(side='top', fill='y', pady=(30,0))
     self.setFilterGain.pack(side='top', fill='y', pady=(30,0))
     self.button.pack(side='top', fill='y', pady=(50,0))
+    self.imuDisplayFrame.pack(side='top', fill='x', pady=(50,0))
 
-    self.rollValFrame.pack(side='top', fill='x')
-    self.pitchValFrame.pack(side='top', fill='x')
-    self.yawValFrame.pack(side='top', fill='x')
+    self.orientationValFrame.pack(side='left', expand=True, fill='both')
+    self.accelerationValFrame.pack(side='left', expand=True, fill='both')
+    self.angularVelValFrame.pack(side='left', expand=True, fill='both')
+
+    self.rValFrame.pack(side='top', fill='x')
+    self.pValFrame.pack(side='top', fill='x')
+    self.yValFrame.pack(side='top', fill='x')
+
+    self.axValFrame.pack(side='top', fill='x')
+    self.ayValFrame.pack(side='top', fill='x')
+    self.azValFrame.pack(side='top', fill='x')
+
+    self.gxValFrame.pack(side='top', fill='x')
+    self.gyValFrame.pack(side='top', fill='x')
+    self.gzValFrame.pack(side='top', fill='x')    
   
     ############################################
 
@@ -133,19 +204,35 @@ class ImuVisualizeFrame(tb.Frame):
 
   def animate(self,i):
     try:
-      roll = g.eimuV2.readRPY(0)
-      pitch = g.eimuV2.readRPY(1)
-      yaw = g.eimuV2.readRPY(2)
+      r = g.eimuV2.readRPY(0)
+      p = g.eimuV2.readRPY(1)
+      y = g.eimuV2.readRPY(2)
       
-      self.rollVal.configure(text=f"{roll}")
-      self.pitchVal.configure(text=f"{pitch}")
-      self.yawVal.configure(text=f"{yaw}")
+      self.rVal.configure(text=f"{r}")
+      self.pVal.configure(text=f"{p}")
+      self.yVal.configure(text=f"{y}")
+
+      ax = g.eimuV2.readAcc(0)
+      ay = g.eimuV2.readAcc(1)
+      az = g.eimuV2.readAcc(2)
+      
+      self.axVal.configure(text=f"{ax}")
+      self.ayVal.configure(text=f"{ay}")
+      self.azVal.configure(text=f"{az}")
+
+      gx = g.eimuV2.readGyro(0)
+      gy = g.eimuV2.readGyro(1)
+      gz = g.eimuV2.readGyro(2)
+      
+      self.gxVal.configure(text=f"{gx}")
+      self.gyVal.configure(text=f"{gy}")
+      self.gzVal.configure(text=f"{gz}")
 
       #-----------------------------------------------------------------------
       ##### convert rpy to DCM #####################
-      DCM = [[np.cos(pitch)*np.cos(yaw), np.cos(pitch)*np.sin(yaw), -1.0*np.sin(pitch)], # cθcψ, cθsψ, −sθ
-             [(np.sin(roll)*np.sin(pitch)*np.cos(yaw)) - (np.cos(roll)*np.sin(yaw)), (np.sin(roll)*np.sin(pitch)*np.sin(yaw)) + (np.cos(roll)*np.cos(yaw)), np.sin(roll)*np.cos(pitch)], # sϕsθcψ - cϕsψ, sϕsθsψ + cϕcψ, sϕcθ
-             [(np.cos(roll)*np.sin(pitch)*np.cos(yaw)) + (np.sin(roll)*np.sin(yaw)), (np.cos(roll)*np.sin(pitch)*np.sin(yaw)) - (np.sin(roll)*np.cos(yaw)), np.cos(roll)*np.cos(pitch)]] # cϕsθcψ + sϕsψ, cϕsθsψ - sϕcψ, cϕcθ
+      DCM = [[np.cos(p)*np.cos(y), np.cos(p)*np.sin(y), -1.0*np.sin(p)], # cθcψ, cθsψ, −sθ
+             [(np.sin(r)*np.sin(p)*np.cos(y)) - (np.cos(r)*np.sin(y)), (np.sin(r)*np.sin(p)*np.sin(y)) + (np.cos(r)*np.cos(y)), np.sin(r)*np.cos(p)], # sϕsθcψ - cϕsψ, sϕsθsψ + cϕcψ, sϕcθ
+             [(np.cos(r)*np.sin(p)*np.cos(y)) + (np.sin(r)*np.sin(y)), (np.cos(r)*np.sin(p)*np.sin(y)) - (np.sin(r)*np.cos(y)), np.cos(r)*np.cos(p)]] # cϕsθcψ + sϕsψ, cϕsθsψ - sϕcψ, cϕcθ
       
       ##### get the IMU sensor coordinate vector from the DCM #####################
       x_vect = DCM[0]

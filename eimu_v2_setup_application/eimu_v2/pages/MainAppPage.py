@@ -6,7 +6,7 @@ from eimu_v2.pages.MagCalibratePage import MagCalibrateFrame
 from eimu_v2.pages.GyroCalibratePage import GyroCalibrateFrame
 from eimu_v2.pages.AccCalibratePage import AccCalibrateFrame
 from eimu_v2.pages.ImuVisualizePage import ImuVisualizeFrame
-# from eimu_v2.pages.ComputeAngleVariancePage import ComputeAngleVarFrame
+from eimu_v2.pages.OrientationVariancePage import OrientationVarianceFrame
 from eimu_v2.pages.GyroVariancePage import GyroVarianceFrame 
 from eimu_v2.pages.AccVariancePage import AccVarianceFrame 
 from eimu_v2.pages.I2CSetupPage import I2CSetupFrame
@@ -30,7 +30,7 @@ class MainAppFrame(tb.Frame):
 
     buttonStyle = tb.Style()
     buttonStyleName = 'primary.Link.TButton'
-    buttonStyle.configure(buttonStyleName, font=('Monospace',12, 'bold'))
+    buttonStyle.configure(buttonStyleName, font=('Monospace',10, 'bold'))
 
     
     self.button1 = tb.Button(self.sideNavFrame, text="MAG CALIBRATION", style=buttonStyleName,
@@ -45,8 +45,8 @@ class MainAppFrame(tb.Frame):
     self.button4 = tb.Button(self.sideNavFrame, text="VIZUALIZE IMU DATA", style=buttonStyleName,
                              command= lambda: self.displayPage(self.button4, self.displayImuVisualizePage))
     
-    # self.button5 = tb.Button(self.sideNavFrame, text="RPY VARIANCE", style=buttonStyleName,
-    #                          command= lambda: self.displayPage(self.button5, self.displayComputeAngleVariancePage))
+    self.button5 = tb.Button(self.sideNavFrame, text="RPY VARIANCE", style=buttonStyleName,
+                             command= lambda: self.displayPage(self.button5, self.displayOrientationVariancePage))
     
     self.button6 = tb.Button(self.sideNavFrame, text="GYRO VARIANCE", style=buttonStyleName,
                              command= lambda: self.displayPage(self.button6, self.displayGyroVariancePage))
@@ -69,11 +69,11 @@ class MainAppFrame(tb.Frame):
     self.label.pack(side="top", fill="x", padx=(40,0), pady=(0,40))
     self.button1.pack(side="top", fill="x", padx=5, pady=(0,5))
     self.button2.pack(side="top", fill="x", padx=5, pady=(0,5))
-    self.button3.pack(side="top", fill="x", padx=5, pady=(0,40))
-    self.button4.pack(side="top", fill="x", padx=5, pady=(0,40))
-    # self.button5.pack(side="top", fill="x", padx=5, pady=(0,5))
+    self.button3.pack(side="top", fill="x", padx=5, pady=(0,30))
+    self.button4.pack(side="top", fill="x", padx=5, pady=(0,30))
+    self.button5.pack(side="top", fill="x", padx=5, pady=(0,5))
     self.button6.pack(side="top", fill="x", padx=5, pady=(0,5))
-    self.button7.pack(side="top", fill="x", padx=5, pady=(0,40))
+    self.button7.pack(side="top", fill="x", padx=5, pady=(0,30))
     self.button8.pack(side="top", fill="x", padx=5, pady=(0,5))
     self.button9.pack(side="top", fill="x", padx=5, pady=(0,5))
 
@@ -94,7 +94,7 @@ class MainAppFrame(tb.Frame):
     self.button2.configure(state="normal")
     self.button3.configure(state="normal")
     self.button4.configure(state="normal")
-    # self.button5.configure(state="normal")
+    self.button5.configure(state="normal")
     self.button6.configure(state="normal")
     self.button7.configure(state="normal")
     self.button8.configure(state="normal")
@@ -126,9 +126,9 @@ class MainAppFrame(tb.Frame):
     self.imuVisualizeFrame = ImuVisualizeFrame(self.mainContentFrame)
     self.imuVisualizeFrame.pack(side="left", expand=True, fill="both")
 
-  # def displayComputeAngleVariancePage(self):
-  #   self.computeAngleVarianceFrame = ComputeAngleVarFrame(self.mainContentFrame)
-  #   self.computeAngleVarianceFrame.pack(side="left", expand=True, fill="both")
+  def displayOrientationVariancePage(self):
+    self.orientationVarianceFrame = OrientationVarianceFrame(self.mainContentFrame)
+    self.orientationVarianceFrame.pack(side="left", expand=True, fill="both")
 
   def displayGyroVariancePage(self):
     self.gyroVarianceFrame = GyroVarianceFrame(self.mainContentFrame)

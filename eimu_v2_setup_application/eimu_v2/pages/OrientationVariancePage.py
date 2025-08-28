@@ -8,7 +8,7 @@ from termcolor import colored
 from eimu_v2.globalParams import g
 
 
-class AccVarianceFrame(tb.Frame):
+class OrientationVarianceFrame(tb.Frame):
   def __init__(self, parentFrame):
     super().__init__(master=parentFrame)
 
@@ -19,28 +19,28 @@ class AccVarianceFrame(tb.Frame):
 
     g.eimuV2.setWorldFrameId(1)
 
-    self.accx_arr = []
-    self.accy_arr = []
-    self.accz_arr = []
+    self.r_arr = []
+    self.p_arr = []
+    self.y_arr = []
 
     self.label = tb.Label(self, text="COMPUTE ACC SENSOR VARIANCE", font=('Monospace',16, 'bold') ,bootstyle="dark")
 
-    self.axValFrame = tb.Frame(self)
-    self.ayValFrame = tb.Frame(self)
-    self.azValFrame = tb.Frame(self)
+    self.rValFrame = tb.Frame(self)
+    self.pValFrame = tb.Frame(self)
+    self.yValFrame = tb.Frame(self)
 
-    ax = g.eimuV2.readAccVariance(0)
-    ay = g.eimuV2.readAccVariance(1)
-    az = g.eimuV2.readAccVariance(2)
+    r = g.eimuV2.readRPYVariance(0)
+    p = g.eimuV2.readRPYVariance(1)
+    y = g.eimuV2.readRPYVariance(2)
 
-    self.axText = tb.Label(self.axValFrame, text="AX-VARIANCE:", font=('Monospace',10, 'bold') ,bootstyle="danger")
-    self.axVal = tb.Label(self.axValFrame, text=f'{ax}', font=('Monospace',10), bootstyle="dark")
+    self.rText = tb.Label(self.rValFrame, text="R-VARIANCE:", font=('Monospace',10, 'bold') ,bootstyle="danger")
+    self.rVal = tb.Label(self.rValFrame, text=f'{r}', font=('Monospace',10), bootstyle="dark")
 
-    self.ayText = tb.Label(self.ayValFrame, text="AY-VARIANCE:", font=('Monospace',10, 'bold') ,bootstyle="success")
-    self.ayVal = tb.Label(self.ayValFrame, text=f'{ay}', font=('Monospace',10), bootstyle="dark")
+    self.pText = tb.Label(self.pValFrame, text="P-VARIANCE:", font=('Monospace',10, 'bold') ,bootstyle="success")
+    self.pVal = tb.Label(self.pValFrame, text=f'{p}', font=('Monospace',10), bootstyle="dark")
 
-    self.azText = tb.Label(self.azValFrame, text="AZ-VARIANCE:", font=('Monospace',10, 'bold') ,bootstyle="primary")
-    self.azVal = tb.Label(self.azValFrame, text=f'{az}', font=('Monospace',10), bootstyle="dark")
+    self.yText = tb.Label(self.yValFrame, text="Y-VARIANCE:", font=('Monospace',10, 'bold') ,bootstyle="primary")
+    self.yVal = tb.Label(self.yValFrame, text=f'{y}', font=('Monospace',10), bootstyle="dark")
   
     #create widgets to be added to the Fame
     percent = 0.0
@@ -57,14 +57,14 @@ class AccVarianceFrame(tb.Frame):
     self.canvasFrame = tb.Frame(self)
 
     #add created widgets to displayFrame
-    self.axText.pack(side='left', fill='both')
-    self.axVal.pack(side='left', expand=True, fill='both')
+    self.rText.pack(side='left', fill='both')
+    self.rVal.pack(side='left', expand=True, fill='both')
 
-    self.ayText.pack(side='left', fill='both')
-    self.ayVal.pack(side='left', expand=True, fill='both')
+    self.pText.pack(side='left', fill='both')
+    self.pVal.pack(side='left', expand=True, fill='both')
 
-    self.azText.pack(side='left', fill='both')
-    self.azVal.pack(side='left', expand=True, fill='both')
+    self.yText.pack(side='left', fill='both')
+    self.yVal.pack(side='left', expand=True, fill='both')
     
     #add created widgets to Frame
     self.label.pack(side='top', pady=(20,50))
@@ -79,9 +79,9 @@ class AccVarianceFrame(tb.Frame):
     #add created widgets to canvasFame
     self.canvas.pack(side='left', expand=True, fill='both', pady=(0,20))
 
-    self.axValFrame.pack(side='top', fill='x')
-    self.ayValFrame.pack(side='top', fill='x')
-    self.azValFrame.pack(side='top', fill='x', pady=(0,20))
+    self.rValFrame.pack(side='top', fill='x')
+    self.pValFrame.pack(side='top', fill='x')
+    self.yValFrame.pack(side='top', fill='x', pady=(0,20))
 
     # start process
     self.compute_variance()
@@ -90,9 +90,9 @@ class AccVarianceFrame(tb.Frame):
     self.loop_count = 0
     self.no_of_samples = 1000
 
-    self.accx_arr = []
-    self.accy_arr = []
-    self.accz_arr = []
+    self.r_arr = []
+    self.p_arr = []
+    self.y_arr = []
 
     percent = 0.0
     self.textVal.configure(text=f'{percent} %')
@@ -102,17 +102,17 @@ class AccVarianceFrame(tb.Frame):
     if self.start_process:
       self.no_of_samples = 1000
 
-      self.axVal.configure(text="0.0")
-      self.ayVal.configure(text="0.0")
-      self.azVal.configure(text="0.0")
+      self.rVal.configure(text="0.0")
+      self.pVal.configure(text="0.0")
+      self.yVal.configure(text="0.0")
 
-      accx_cal = g.eimuV2.readAcc(0)
-      accy_cal = g.eimuV2.readAcc(1)
-      accz_cal = g.eimuV2.readAcc(2)
+      r = g.eimuV2.readRPY(0)
+      p = g.eimuV2.readRPY(1)
+      y = g.eimuV2.readRPY(2)
 
-      self.accx_arr.append(accx_cal)
-      self.accy_arr.append(accy_cal)
-      self.accz_arr.append(accz_cal)
+      self.r_arr.append(r)
+      self.p_arr.append(p)
+      self.y_arr.append(y)
 
       self.loop_count += 1
       percent = (self.loop_count*100)/self.no_of_samples
@@ -133,25 +133,25 @@ class AccVarianceFrame(tb.Frame):
 
   def print_computed_variance(self):
 
-    accx_variance = np.var(self.accx_arr)
-    accy_variance = np.var(self.accy_arr)
-    accz_variance = np.var(self.accz_arr)
+    r_variance = np.var(self.r_arr)
+    p_variance = np.var(self.p_arr)
+    y_variance = np.var(self.y_arr)
 
-    g.eimuV2.writeAccVariance(0, accx_variance)
-    g.eimuV2.writeAccVariance(1, accy_variance)
-    g.eimuV2.writeAccVariance(2, accz_variance)
+    g.eimuV2.writeRPYVariance(0, r_variance)
+    g.eimuV2.writeRPYVariance(1, p_variance)
+    g.eimuV2.writeRPYVariance(2, y_variance)
 
-    accx_variance = g.eimuV2.readAccVariance(0)
-    accy_variance = g.eimuV2.readAccVariance(1)
-    accz_variance = g.eimuV2.readAccVariance(2)
+    r_variance = g.eimuV2.readRPYVariance(0)
+    p_variance = g.eimuV2.readRPYVariance(1)
+    y_variance = g.eimuV2.readRPYVariance(2)
 
-    self.axVal.configure(text=f'{accx_variance}')
-    self.ayVal.configure(text=f'{accy_variance}')
-    self.azVal.configure(text=f'{accz_variance}')
+    self.rVal.configure(text=f'{r_variance}')
+    self.pVal.configure(text=f'{p_variance}')
+    self.yVal.configure(text=f'{y_variance}')
 
-    acc_covariance = [ accx_variance, 0.0, 0.0, 0.0, accy_variance, 0.0, 0.0, 0.0, accz_variance]
-    print(colored("\nLinear Acceleration Covariance:", 'green'))
-    print(acc_covariance)
+    rpy_covariance = [ r_variance, 0.0, 0.0, 0.0, p_variance, 0.0, 0.0, 0.0, y_variance]
+    print(colored("\nOrientation Covariance:", 'green'))
+    print(rpy_covariance)
 
   def compute_variance(self):
     if self.start_process:
