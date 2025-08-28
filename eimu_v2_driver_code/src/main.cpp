@@ -24,15 +24,15 @@ void setup()
   SPI.begin();
   status = imu.begin();
   if (status < 0) {
-    Serial.println("IMU initialization unsuccessful");
-    Serial.println("Check IMU wiring or try cycling power");
-    Serial.print("Status: ");
-    Serial.println(status);
+    // Serial.println("IMU initialization unsuccessful");
+    // Serial.println("Check IMU wiring or try cycling power");
+    // Serial.print("Status: ");
+    // Serial.println(status);
     while(1) {}
   }
   //--------------------------------------------------------//
 
-  // loadStoredParams();
+  loadStoredParams();
 
   Wire.onReceive(onReceive);
   Wire.onRequest(onRequest);
@@ -64,6 +64,12 @@ void loop()
   {
     imu.readSensor();
 
+    float _ax, _ay, _az;
+    float _gx, _gy, _gz;
+    float _mx, _my, _mz;
+    float r, p, y;
+    float qw, qx, qy, qz;
+
     //------------READ SENSOR DATA IN ENU FRAME---------------//
     accRaw[0] = imu.getAccelY_mss();
     accRaw[1] = imu.getAccelX_mss();
@@ -80,89 +86,87 @@ void loop()
 
     //---------------CALIBRATE SENSOR DATA IN ENU FRAME -----------------//
     // calibrate acc data
-    accCal[0] = accRaw[0] - accOff[0];
-    accCal[1] = accRaw[1] - accOff[1];
-    accCal[2] = accRaw[2] - accOff[2];
+    _ax = accRaw[0] - accOff[0];
+    _ay = accRaw[1] - accOff[1];
+    _az = accRaw[2] - accOff[2];
 
     // calibrate gyro data
-    gyroCal[0] = gyroRaw[0] - gyroOff[0];
-    gyroCal[1] = gyroRaw[1] - gyroOff[1];
-    gyroCal[2] = gyroRaw[2] - gyroOff[2];
+    _gx = gyroRaw[0] - gyroOff[0];
+    _gy = gyroRaw[1] - gyroOff[1];
+    _gz = gyroRaw[2] - gyroOff[2];
 
     // calibrate mag data
-    // magCal = A_1*(magRaw - b) using the A matrix and b vector to remove the magnetic offsets
-    mag_vect[0] = magRaw[0];
-    mag_vect[1] = magRaw[1];
-    mag_vect[2] = magRaw[2];
+    // magCal = A_matricx * (magRaw - b_vector) using the A matrix (Soft Iron Offset) and b vector(hard Iron Offset) to remove the magnetic offsets
 
-    // mag_vect = mag_vect - b_vect
-    mag_vect[0] = mag_vect[0] - magBvect[0];
-    mag_vect[1] = mag_vect[1] - magBvect[1];
-    mag_vect[2] = mag_vect[2] - magBvect[2];
+    // mag_vect = magRaw - b_vect
+    mag_vect[0] = magRaw[0] - magBvect[0];
+    mag_vect[1] = magRaw[1] - magBvect[1];
+    mag_vect[2] = magRaw[2] - magBvect[2];
 
-    // mag_vect = A_mat * mag_vect
+    // magCal = A_mat * mag_vect
     vectOp.transform(mag_vect, magAmat, mag_vect);
 
-    magCal[0] = mag_vect[0];
-    magCal[1] = mag_vect[1];
-    magCal[2] = mag_vect[2];
+    _mx = mag_vect[0];
+    _my = mag_vect[1];
+    _mz = mag_vect[2];
     //-----------------------------------------------------//
 
     //------------- APPLY MADWICK FILTER -----------------//
-    float _ax, _ay, _az;
-    float _gx, _gy, _gz;
-    float _mx, _my, _mz;
-    float r, p, y;
-    float qw, qx, qy, qz;
-
+  
     // filter is updated based on the choosen world frame
     switch (worldFrameId)
     {
     case 0: // NWU
-      _ax = accCal[1];
-      _ay = -1.00 * accCal[0];
-      _az = accCal[2];
+      accCal[0] = _ay;
+      accCal[1] = -1.00 * _ax;
+      accCal[2] = _az;
 
-      _gx = gyroCal[1];
-      _gy = -1.00 * gyroCal[0];
-      _gz = gyroCal[2];
+      gyroCal[0] = _gy;
+      gyroCal[1] = -1.00 * _gx;
+      gyroCal[2] = _gz;
 
-      _mx = MicroTeslaToTesla(magCal[1]);
-      _my = MicroTeslaToTesla(-1.00 * magCal[0]);
-      _mz = MicroTeslaToTesla(magCal[2]);
+      magCal[0] = _my;
+      magCal[1] = -1.00 * _mx;
+      magCal[2] = _mz;
       break;
 
     case 1: // ENU
-      _ax = accCal[0];
-      _ay = accCal[1];
-      _az = accCal[2];
+      accCal[0] = _ax;
+      accCal[1] = _ay;
+      accCal[2] = _az;
 
-      _gx = gyroCal[0];
-      _gy = gyroCal[1];
-      _gz = gyroCal[2];
+      gyroCal[0] = _gx;
+      gyroCal[1] = _gy;
+      gyroCal[2] = _gz;
 
-      _mx = MicroTeslaToTesla(magCal[0]);
-      _my = MicroTeslaToTesla(magCal[1]);
-      _mz = MicroTeslaToTesla(magCal[2]);
+      magCal[0] = _mx;
+      magCal[1] = _my;
+      magCal[2] = _mz;
       break;
 
     case 2: // NED
-      _ax = accCal[1];
-      _ay = accCal[0];
-      _az = -1.00 * accCal[2];
+      accCal[0] = _ay;
+      accCal[1] = _ax;
+      accCal[2] = -1.00 * _az;
 
-      _gx = gyroCal[1];
-      _gy = gyroCal[0];
-      _gz = -1.00 * gyroCal[2];
+      gyroCal[0] = _gy;
+      gyroCal[1] = _gx;
+      gyroCal[2] = -1.00 * _gz;
 
-      _mx = MicroTeslaToTesla(magCal[1]);
-      _my = MicroTeslaToTesla(magCal[0]);
-      _mz = MicroTeslaToTesla(-1.00 * magCal[2]);
+      magCal[0] = _my;
+      magCal[1] = _mx;
+      magCal[2] = -1.00 * _mz;
       break;
     }
     
 
-    madgwickFilter.madgwickAHRSupdate(_gx, _gy, _gz, _ax, _ay, _az, _mx, _my, _mz);
+    // madgwickFilter.madgwickAHRSupdate(_gx, _gy, _gz, _ax, _ay, _az, _mx, _my, _mz);
+
+    madgwickFilter.madgwickAHRSupdate(
+        gyroCal[0], gyroCal[1], gyroCal[2], 
+        accCal[0], accCal[1], accCal[2],
+        MicroTeslaToTesla(magCal[0]), MicroTeslaToTesla(magCal[1]), MicroTeslaToTesla(magCal[2])
+    );
 
     madgwickFilter.getOrientationRPY(r, p, y);
     madgwickFilter.getOrientationQuat(qw, qx, qy, qz);
@@ -172,15 +176,15 @@ void loop()
     //----------------------------------------------------//
 
     // Serial.println("-----------------------------------");
-    // Serial.print("RPY: ");
-    // Serial.print(rpy[0], 4); Serial.print("\t");
-    // Serial.print(rpy[1], 4); Serial.print("\t");
-    // Serial.println(rpy[2], 4);
+    // Serial.print("ACC: ");
+    // Serial.print(accRaw[0], 4); Serial.print("\t");
+    // Serial.print(accRaw[1], 4); Serial.print("\t");
+    // Serial.println(accRaw[2], 4);
 
     // Serial.print("GYR: ");
-    // Serial.print(gyroCal[0], 4); Serial.print("\t");
-    // Serial.print(gyroCal[1], 4); Serial.print("\t");
-    // Serial.println(gyroCal[2], 4);
+    // Serial.print(gyroRaw[0], 4); Serial.print("\t");
+    // Serial.print(gyroRaw[1], 4); Serial.print("\t");
+    // Serial.println(gyroRaw[2], 4);
 
     // Serial.print("MAG: ");
     // Serial.print(magRaw[0], 4); Serial.print("\t");

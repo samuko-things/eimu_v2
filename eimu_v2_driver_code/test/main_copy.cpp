@@ -1,286 +1,192 @@
 #include <Arduino.h>
+#include <SPI.h>
 #include "command_functions.h"
+#include "vectlab.h"
 #include "serial_comm.h"
 #include "i2c_comm.h"
 
-//------------------------------------------------------------------------------//
-void IRAM_ATTR readEncoder0()
+float MicroTeslaToTesla(float mT)
 {
-  unsigned long currentTickTime = micros();
-
-  if (digitalRead(encoder[0].clkPin) == digitalRead(encoder[0].dirPin))
-  {
-    encoder[0].tickCount -= 1;
-    encoder[0].dir = -1;
-  }
-  else
-  {
-    encoder[0].tickCount += 1;
-    encoder[0].dir = 1;
-  }
-
-  unsigned long period = currentTickTime - encoder[0].oldTickTime;
-  if (period > 50 && period < 20000000)
-  { // Ignore if > 20 sec or negative
-    encoder[0].periodPerTick = period;
-  }
-  encoder[0].oldTickTime = currentTickTime;
+  return mT * 1000000;
 }
 
-void IRAM_ATTR readEncoder1()
-{
-  unsigned long currentTickTime = micros();
-
-  if (digitalRead(encoder[1].clkPin) == digitalRead(encoder[1].dirPin))
-  {
-    encoder[1].tickCount -= 1;
-    encoder[1].dir = -1;
-  }
-  else
-  {
-    encoder[1].tickCount += 1;
-    encoder[1].dir = 1;
-  }
-
-  unsigned long period = currentTickTime - encoder[1].oldTickTime;
-  if (period > 50 && period < 20000000)
-  { // Ignore if > 20 sec or negative
-    encoder[1].periodPerTick = period;
-  }
-  encoder[1].oldTickTime = currentTickTime;
-}
-
-void IRAM_ATTR readEncoder2()
-{
-  unsigned long currentTickTime = micros();
-
-  if (digitalRead(encoder[2].clkPin) == digitalRead(encoder[2].dirPin))
-  {
-    encoder[2].tickCount -= 1;
-    encoder[2].dir = -1;
-  }
-  else
-  {
-    encoder[2].tickCount += 1;
-    encoder[2].dir = 1;
-  }
-
-  unsigned long period = currentTickTime - encoder[2].oldTickTime;
-  if (period > 50 && period < 20000000)
-  { // Ignore if > 20 sec or negative
-    encoder[2].periodPerTick = period;
-  }
-  encoder[2].oldTickTime = currentTickTime;
-}
-
-void IRAM_ATTR readEncoder3()
-{
-  unsigned long currentTickTime = micros();
-
-  if (digitalRead(encoder[3].clkPin) == digitalRead(encoder[3].dirPin))
-  {
-    encoder[3].tickCount -= 1;
-    encoder[3].dir = -1;
-  }
-  else
-  {
-    encoder[3].tickCount += 1;
-    encoder[3].dir = 1;
-  }
-
-  unsigned long period = currentTickTime - encoder[3].oldTickTime;
-  if (period > 50 && period < 20000000)
-  { // Ignore if > 20 sec or negative
-    encoder[3].periodPerTick = period;
-  }
-  encoder[3].oldTickTime = currentTickTime;
-}
-//----------------------------------------------------------------------------------------------//
-
-void encoderInit()
-{
-  for (int i = 0; i < num_of_motors; i += 1)
-  {
-    encoder[i].setPulsePerRev(enc_ppr[i]);
-  }
-
-  attachInterrupt(digitalPinToInterrupt(encoder[0].clkPin), readEncoder0, RISING);
-  attachInterrupt(digitalPinToInterrupt(encoder[1].clkPin), readEncoder1, RISING);
-  attachInterrupt(digitalPinToInterrupt(encoder[2].clkPin), readEncoder2, RISING);
-  attachInterrupt(digitalPinToInterrupt(encoder[3].clkPin), readEncoder3, RISING);
-}
-
-void velFilterInit()
-{
-  for (int i = 0; i < num_of_motors; i += 1)
-  {
-    velFilter[i].setCutOffFreq(cutOffFreq[i]);
-  }
-}
-
-void pidInit()
-{
-  for (int i = 0; i < num_of_motors; i += 1)
-  {
-    pidMotor[i].setParameters(kp[i], ki[i], kd[i], outMin, outMax);
-    pidMotor[i].begin();
-  }
-}
-
-//---------------------------------------------------------------------------------------------
-// Timing variables in microseconds
-// please do not adjust any of the values as it can affect important operations
-unsigned long serialLoopTime, serialLoopTimeInterval = 5;
-unsigned long pidTime, pidTimeInterval = 5;
-unsigned long pidStopTime[num_of_motors], pidStopTimeInterval = 500;
-unsigned long readImuTime, readImuSampleTime = 20;        // ms -> (1000/sampleTime) hz
-//---------------------------------------------------------------------------------------------
-
+unsigned long serialCommTime, serialCommTimeInterval = 5; // ms -> (1000/sampleTime) hz
+unsigned long readImuTime, readImuTimeInterval = 20;        // ms -> (1000/sampleTime) hz
 
 void setup()
 {
-  loadStoredParams();
-
+  /* Serial to display data */
   Serial.begin(115200);
   Serial.setTimeout(2);
 
-  if (useIMU){
-    Wire.begin();
+  //---------------- INITIALIZE IMU -----------------------//
+  // start communication with IMU 
+  SPI.begin();
+  status = imu.begin();
+  if (status < 0) {
+    Serial.println("IMU initialization unsuccessful");
+    Serial.println("Check IMU wiring or try cycling power");
+    Serial.print("Status: ");
+    Serial.println(status);
+    while(1) {}
   }
-  else {
-    Wire.onReceive(onReceive);
-    Wire.onRequest(onRequest);
-    Wire.begin(i2cAddress);
-  }
+  //--------------------------------------------------------//
+
+  // loadStoredParams();
+
+  Wire.onReceive(onReceive);
+  Wire.onRequest(onRequest);
+  Wire.begin(i2cAddress);
+
+  madgwickFilter.setAlgorithmGain(filterGain);
+  madgwickFilter.setWorldFrameId(worldFrameId); // 0 - NWU,  1 - ENU,  2 - NED
 
   pinMode(LED_BUILTIN, OUTPUT);
-
-  analogWriteResolution(8); // 8 Bit resolution
-  analogWriteFrequency(1000); // 1kHz
-
-  encoderInit();
-  velFilterInit();
-  pidInit();
-
-  if (useIMU)
-    imu.begin();
 
   digitalWrite(LED_BUILTIN, HIGH);
   delay(1000);
   digitalWrite(LED_BUILTIN, LOW);
 
-  // Initialize timing markers
-  unsigned long now = millis();
-  serialLoopTime = now;
-  pidTime = now;
-  for (int i = 0; i < num_of_motors; i += 1)
-  {
-    pidStopTime[i] = now;
-    cmdVelTimeout[i] = now;
-    isMotorCommanded[i] = 0;
-  }
-  readImuTime = now;
+  serialCommTime = millis();
+  readImuTime = millis();
 }
 
 void loop()
 {
   // Serial comm loop
-  if ((millis() - serialLoopTime) >= serialLoopTimeInterval)
+  if ((millis() - serialCommTime) >= serialCommTimeInterval)
   {
     recieve_and_send_data();
-    serialLoopTime = millis();
+    serialCommTime = millis();
   }
 
-  // Sensor update
-  for (int i = 0; i < num_of_motors; i += 1)
+  if ((millis() - readImuTime) >= readImuTimeInterval)
   {
-    encoder[i].resetAngVelToZero();
-    unfilteredVel[i] = encoder[i].getAngVel();
-    filteredVel[i] = velFilter[i].filter(unfilteredVel[i]);
-  }
+    imu.readSensor();
 
-  // PID control loop
-  if ((millis() - pidTime) >= pidTimeInterval)
-  {
-    for (int i = 0; i < num_of_motors; i += 1)
+    //------------READ SENSOR DATA IN ENU FRAME---------------//
+    accRaw[0] = imu.getAccelY_mss();
+    accRaw[1] = imu.getAccelX_mss();
+    accRaw[2] = -1.00 * imu.getAccelZ_mss();
+
+    gyroRaw[0] = imu.getGyroY_rads();
+    gyroRaw[1] = imu.getGyroX_rads();
+    gyroRaw[2] = -1.00 * imu.getGyroZ_rads();
+
+    magRaw[0] = imu.getMagY_uT();
+    magRaw[1] = imu.getMagX_uT();
+    magRaw[2] = -1.00 * imu.getMagZ_uT();
+    //--------------------------------------------------------//
+
+    //---------------CALIBRATE SENSOR DATA IN ENU FRAME -----------------//
+    // calibrate acc data
+    accCal[0] = accRaw[0] - accOff[0];
+    accCal[1] = accRaw[1] - accOff[1];
+    accCal[2] = accRaw[2] - accOff[2];
+
+    // calibrate gyro data
+    gyroCal[0] = gyroRaw[0] - gyroOff[0];
+    gyroCal[1] = gyroRaw[1] - gyroOff[1];
+    gyroCal[2] = gyroRaw[2] - gyroOff[2];
+
+    // calibrate mag data
+    // magCal = A_matricx * (magRaw - b_vector) using the A matrix (Soft Iron Offset) and b vector(hard Iron Offset) to remove the magnetic offsets
+
+    // mag_vect = magRaw - b_vect
+    mag_vect[0] = magRaw[0] - magBvect[0];
+    mag_vect[1] = magRaw[1] - magBvect[1];
+    mag_vect[2] = magRaw[2] - magBvect[2];
+
+    // magCal = A_mat * mag_vect
+    vectOp.transform(magCal, magAmat, mag_vect);
+
+    // magCal[0] = mag_vect[0];
+    // magCal[1] = mag_vect[1];
+    // magCal[2] = mag_vect[2];
+    //-----------------------------------------------------//
+
+    //------------- APPLY MADWICK FILTER -----------------//
+    float _ax, _ay, _az;
+    float _gx, _gy, _gz;
+    float _mx, _my, _mz;
+    float r, p, y;
+    float qw, qx, qy, qz;
+
+    // filter is updated based on the choosen world frame
+    switch (worldFrameId)
     {
-      if (pidMode[i])
-      {
-        output[i] = pidMotor[i].compute(target[i], filteredVel[i]);
-        motor[i].sendPWM((int)output[i]);
-      }
+    case 0: // NWU
+      _ax = accCal[1];
+      _ay = -1.00 * accCal[0];
+      _az = accCal[2];
+
+      _gx = gyroCal[1];
+      _gy = -1.00 * gyroCal[0];
+      _gz = gyroCal[2];
+
+      _mx = MicroTeslaToTesla(magCal[1]);
+      _my = MicroTeslaToTesla(-1.00 * magCal[0]);
+      _mz = MicroTeslaToTesla(magCal[2]);
+      break;
+
+    case 1: // ENU
+      _ax = accCal[0];
+      _ay = accCal[1];
+      _az = accCal[2];
+
+      _gx = gyroCal[0];
+      _gy = gyroCal[1];
+      _gz = gyroCal[2];
+
+      _mx = MicroTeslaToTesla(magCal[0]);
+      _my = MicroTeslaToTesla(magCal[1]);
+      _mz = MicroTeslaToTesla(magCal[2]);
+      break;
+
+    case 2: // NED
+      _ax = accCal[1];
+      _ay = accCal[0];
+      _az = -1.00 * accCal[2];
+
+      _gx = gyroCal[1];
+      _gy = gyroCal[0];
+      _gz = -1.00 * gyroCal[2];
+
+      _mx = MicroTeslaToTesla(magCal[1]);
+      _my = MicroTeslaToTesla(magCal[0]);
+      _mz = MicroTeslaToTesla(-1.00 * magCal[2]);
+      break;
     }
-    pidTime = millis();
-  }
+    
 
-  // check to see if motor has stopped
-  for (int i = 0; i < num_of_motors; i += 1)
-  {
-    int target_int = (int)fabs(target[i]) * 1000;
-    if (target_int < 10 && pidMode[i])
-    {
-      if ((millis() - pidStopTime[i]) >= pidStopTimeInterval)
-      {
-        pidMotor[i].begin();
-        isMotorCommanded[i] = 0;
-        pidMode[i] = 0;
-        motor[i].sendPWM(0);
-        pidStopTime[i] = millis();
-      }
-    }
-    else
-    {
-      pidStopTime[i] = millis();
-    }
-  }
+    madgwickFilter.madgwickAHRSupdate(_gx, _gy, _gz, _ax, _ay, _az, _mx, _my, _mz);
 
-  // command timeout
-  int cmdTimeout = (int)cmdVelTimeoutInterval;
-  if (cmdVelTimeoutInterval > 0)
-  {
-    for (int i = 0; i < num_of_motors; i += 1)
-    {
-      if (!isMotorCommanded[i])
-      {
-        cmdVelTimeout[i] = millis();
-      }
-      if (isMotorCommanded[i] && ((millis() - cmdVelTimeout[i]) >= cmdVelTimeoutInterval))
-      {
-        if(pidMode[i]){
-          target[i] = 0.000;
-        }
-        else {
-          motor[i].sendPWM(0);
-        }
-        isMotorCommanded[i] = 0;
-      }
-    }
-  }
+    madgwickFilter.getOrientationRPY(r, p, y);
+    madgwickFilter.getOrientationQuat(qw, qx, qy, qz);
 
-  if ((millis() - readImuTime) >= readImuSampleTime)
-  {
-    if(useIMU){
-      //-----READ ACC DATA (m/s^2) AND CALIBRATE-------------//
-      accRaw[0] = imu.readAccX_mps2(); // m/s²
-      accRaw[1] = imu.readAccY_mps2(); // m/s²
-      accRaw[2] = imu.readAccZ_mps2(); // m/s²
+    rpy[0] = r; rpy[1] = p; rpy[2] = y;
+    quat[0] = qw; quat[1] = qx; quat[2] = qy; quat[3] = qz;
+    //----------------------------------------------------//
 
-      accCal[0] = accRaw[0] - accOff[0];
-      accCal[1] = accRaw[1] - accOff[1];
-      accCal[2] = accRaw[2] - accOff[2];
-      //------------------------------------------------------//
+    // Serial.println("-----------------------------------");
+    // Serial.print("ACC: ");
+    // Serial.print(accRaw[0], 4); Serial.print("\t");
+    // Serial.print(accRaw[1], 4); Serial.print("\t");
+    // Serial.println(accRaw[2], 4);
 
-      //-----READ GYRO DATA (rad/s) AND CALIBRATE------------//
-      gyroRaw[0] = imu.readGyroX_rps(); // rad/s
-      gyroRaw[1] = imu.readGyroY_rps(); // rad/s
-      gyroRaw[2] = imu.readGyroZ_rps(); // rad/s
+    // Serial.print("GYR: ");
+    // Serial.print(gyroRaw[0], 4); Serial.print("\t");
+    // Serial.print(gyroRaw[1], 4); Serial.print("\t");
+    // Serial.println(gyroRaw[2], 4);
 
-      gyroCal[0] = gyroRaw[0] - gyroOff[0];
-      gyroCal[1] = gyroRaw[1] - gyroOff[1];
-      gyroCal[2] = gyroRaw[2] - gyroOff[2];
-      //-----------------------------------------------------//
+    // Serial.print("MAG: ");
+    // Serial.print(magRaw[0], 4); Serial.print("\t");
+    // Serial.print(magRaw[1], 4); Serial.print("\t");
+    // Serial.println(magRaw[2], 4);
+    // Serial.println("------------------------------------");
 
-      readImuTime = millis(); 
-    }
+    // Serial.println();
+
+    readImuTime = millis();
   }
 }

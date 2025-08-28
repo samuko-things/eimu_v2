@@ -220,7 +220,7 @@ String getI2cAddress()
 
 String setWorldFrameId(int id)
 {
-  if((id <= 0) || (id > 2)){
+  if((id < 0) || (id > 2)){
     return "0";
   }
   else {
@@ -228,6 +228,8 @@ String setWorldFrameId(int id)
     storage.begin(params_ns, false);
     storage.putInt(worldFrameId_key, worldFrameId);
     storage.end();
+
+    madgwickFilter.setWorldFrameId(worldFrameId); // 0 - NWU,  1 - ENU,  2 - NED
 
     return "1";
   }  
@@ -244,7 +246,9 @@ String setFilterGain(float gain)
   storage.begin(params_ns, false);
   storage.putFloat(filterGain_key, filterGain);
   storage.end();
-  
+
+  madgwickFilter.setAlgorithmGain(filterGain);
+
   return "1"; 
 }
 String getFilterGain()
@@ -258,7 +262,7 @@ String getFilterGain()
 //------------------------------------------------------------------//
 String readRPY(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -269,7 +273,7 @@ String readRPY(int no)
 
 String readQuat(int no)
 {
-  bool not_allowed = (no < 0) || (no > (3));
+  bool not_allowed = (no < 0) || (no > 3);
 
   if (not_allowed) 
     return "0.000";
@@ -280,7 +284,7 @@ String readQuat(int no)
 
 String readRPYVariance(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -288,12 +292,12 @@ String readRPYVariance(int no)
   return String(rpyVar[no], 8);
 }
 String writeRPYVariance(int no, float val) {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0";
 
-  accVar[no] = val;
+  rpyVar[no] = val;
   storage.begin(params_ns, false);
   storage.putFloat(rpyVar_key[no], rpyVar[no]);
   storage.end();
@@ -303,7 +307,7 @@ String writeRPYVariance(int no, float val) {
 
 String readAcc(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -314,7 +318,7 @@ String readAcc(int no)
 
 String readAccRaw(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -325,7 +329,7 @@ String readAccRaw(int no)
 
 String readAccOffset(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -333,7 +337,7 @@ String readAccOffset(int no)
   return String(accOff[no], 8);
 }
 String writeAccOffset(int no, float val) {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
   
   if (not_allowed) 
     return "0";
@@ -348,7 +352,7 @@ String writeAccOffset(int no, float val) {
 
 String readAccVariance(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -356,7 +360,7 @@ String readAccVariance(int no)
   return String(accVar[no], 8);
 }
 String writeAccVariance(int no, float val) {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0";
@@ -371,7 +375,7 @@ String writeAccVariance(int no, float val) {
 
 String readGyro(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -382,7 +386,7 @@ String readGyro(int no)
 
 String readGyroRaw(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -393,7 +397,7 @@ String readGyroRaw(int no)
 
 String readGyroOffset(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -401,7 +405,7 @@ String readGyroOffset(int no)
   return String(gyroOff[no], 8);
 }
 String writeGyroOffset(int no, float val) {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
   
   if (not_allowed) 
     return "0";
@@ -416,7 +420,7 @@ String writeGyroOffset(int no, float val) {
 
 String readGyroVariance(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -424,7 +428,7 @@ String readGyroVariance(int no)
   return String(gyroVar[no], 6);
 }
 String writeGyroVariance(int no, float val) {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
   
   if (not_allowed) 
     return "0";
@@ -438,7 +442,7 @@ String writeGyroVariance(int no, float val) {
 
 String readMag(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -449,7 +453,7 @@ String readMag(int no)
 
 String readMagRaw(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -460,7 +464,7 @@ String readMagRaw(int no)
 
 String readMagHardOffset(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -468,7 +472,7 @@ String readMagHardOffset(int no)
   return String(magBvect[no], 8);
 }
 String writeMagHardOffset(int no, float val) {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
   
   if (not_allowed) 
     return "0";
@@ -483,7 +487,7 @@ String writeMagHardOffset(int no, float val) {
 
 String readMagSoftOffset0(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -491,7 +495,7 @@ String readMagSoftOffset0(int no)
   return String(magAmat[0][no], 8);
 }
 String writeMagSoftOffset0(int no, float val) {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
   
   if (not_allowed) 
     return "0";
@@ -506,7 +510,7 @@ String writeMagSoftOffset0(int no, float val) {
 
 String readMagSoftOffset1(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -514,7 +518,7 @@ String readMagSoftOffset1(int no)
   return String(magAmat[1][no], 8);
 }
 String writeMagSoftOffset1(int no, float val) {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
   
   if (not_allowed) 
     return "0";
@@ -529,7 +533,7 @@ String writeMagSoftOffset1(int no, float val) {
 
 String readMagSoftOffset2(int no)
 {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
 
   if (not_allowed) 
     return "0.000";
@@ -537,7 +541,7 @@ String readMagSoftOffset2(int no)
   return String(magAmat[2][no], 8);
 }
 String writeMagSoftOffset2(int no, float val) {
-  bool not_allowed = (no < 0) || (no > (2));
+  bool not_allowed = (no < 0) || (no > 2);
   
   if (not_allowed) 
     return "0";

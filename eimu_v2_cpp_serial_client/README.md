@@ -21,8 +21,6 @@
     cmake --build ./build/
     ````
     ````
-    ./build/motor_control
-    or
     ./build/read_imu
     ````
 

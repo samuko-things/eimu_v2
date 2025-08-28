@@ -304,6 +304,12 @@ void recieve_and_send_data(){
         Serial.println(sendMsg);
       }
 
+      else if (dataMsgBufferArray[0] == "/reset")
+      {
+        sendMsg = triggerResetParams();
+        Serial.println(sendMsg);
+      }
+
       digitalWrite(LED_BUILTIN, LOW);
     }
     else
