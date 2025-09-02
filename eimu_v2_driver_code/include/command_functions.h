@@ -166,8 +166,8 @@ void loadStoredParams(){
     rpyVar[i] = storage.getFloat(rpyVar_key[i], 0.0);
     magBvect[i] = storage.getFloat(magBvect_key[i], 0.0);
     magAmat[0][i] = storage.getFloat(magAmatR0_key[i], 0.0);
-    magAmat[1][i] = storage.getFloat(magAmatR0_key[i], 0.0);
-    magAmat[2][i] = storage.getFloat(magAmatR0_key[i], 0.0);
+    magAmat[1][i] = storage.getFloat(magAmatR1_key[i], 0.0);
+    magAmat[2][i] = storage.getFloat(magAmatR2_key[i], 0.0);
   }
   filterGain = storage.getFloat(filterGain_key, 0.1);
   worldFrameId = storage.getInt(worldFrameId_key, 1);

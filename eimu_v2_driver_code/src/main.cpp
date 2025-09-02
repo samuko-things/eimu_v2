@@ -11,7 +11,7 @@ float MicroTeslaToTesla(float mT)
 }
 
 unsigned long serialCommTime, serialCommTimeInterval = 5; // ms -> (1000/sampleTime) hz
-unsigned long readImuTime, readImuTimeInterval = 20;        // ms -> (1000/sampleTime) hz
+unsigned long readImuTime, readImuTimeInterval = 5;        // ms -> (1000/sampleTime) hz
 
 void setup()
 {
@@ -95,9 +95,6 @@ void loop()
     _gy = gyroRaw[1] - gyroOff[1];
     _gz = gyroRaw[2] - gyroOff[2];
 
-    // calibrate mag data
-    // magCal = A_matricx * (magRaw - b_vector) using the A matrix (Soft Iron Offset) and b vector(hard Iron Offset) to remove the magnetic offsets
-
     // mag_vect = magRaw - b_vect
     mag_vect[0] = magRaw[0] - magBvect[0];
     mag_vect[1] = magRaw[1] - magBvect[1];
@@ -158,9 +155,6 @@ void loop()
       magCal[2] = -1.00 * _mz;
       break;
     }
-    
-
-    // madgwickFilter.madgwickAHRSupdate(_gx, _gy, _gz, _ax, _ay, _az, _mx, _my, _mz);
 
     madgwickFilter.madgwickAHRSupdate(
         gyroCal[0], gyroCal[1], gyroCal[2], 
@@ -174,25 +168,6 @@ void loop()
     rpy[0] = r; rpy[1] = p; rpy[2] = y;
     quat[0] = qw; quat[1] = qx; quat[2] = qy; quat[3] = qz;
     //----------------------------------------------------//
-
-    // Serial.println("-----------------------------------");
-    // Serial.print("ACC: ");
-    // Serial.print(accRaw[0], 4); Serial.print("\t");
-    // Serial.print(accRaw[1], 4); Serial.print("\t");
-    // Serial.println(accRaw[2], 4);
-
-    // Serial.print("GYR: ");
-    // Serial.print(gyroRaw[0], 4); Serial.print("\t");
-    // Serial.print(gyroRaw[1], 4); Serial.print("\t");
-    // Serial.println(gyroRaw[2], 4);
-
-    // Serial.print("MAG: ");
-    // Serial.print(magRaw[0], 4); Serial.print("\t");
-    // Serial.print(magRaw[1], 4); Serial.print("\t");
-    // Serial.println(magRaw[2], 4);
-    // Serial.println("------------------------------------");
-
-    // Serial.println();
 
     readImuTime = millis();
   }

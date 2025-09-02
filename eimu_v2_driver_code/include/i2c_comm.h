@@ -62,7 +62,6 @@ void onReceive(int dataSizeInBytes) {
         i2cSendMsg = "0.00";
       else
         i2cSendMsg = readRPY(pos);
-      Serial.println(i2cSendMsg);
     }
 
     if (i2cDataMsgBufferArray[0] == "/quat")

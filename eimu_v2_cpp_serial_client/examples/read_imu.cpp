@@ -51,25 +51,18 @@ int main(int argc, char **argv)
     {
       try
       {
-        ax = eimuV2.readAcc(0);
-        ay = eimuV2.readAcc(1);
-        az = eimuV2.readAcc(2);
+        r = eimuV2.readRPY(0);
+        p = eimuV2.readRPY(1);
+        y = eimuV2.readRPY(2);
 
-        gx = eimuV2.readGyro(0);
-        gy = eimuV2.readGyro(1);
-        gz = eimuV2.readGyro(2);
       }
       catch (...)
       {
       }
 
-      std::cout << "ax: " << ax << std::fixed << std::setprecision(4);
-      std::cout << "\tay: " << ax << std::fixed << std::setprecision(4);
-      std::cout << "\taz: " << az << std::fixed << std::setprecision(4) << std::endl;
-      std::cout << "gx: " << ax << std::fixed << std::setprecision(4);
-      std::cout << "\tgy: " << ax << std::fixed << std::setprecision(4);
-      std::cout << "\tgz: " << az << std::fixed << std::setprecision(4) << std::endl;
-      std::cout << std::endl;
+      std::cout << "roll: " << ax << std::fixed << std::setprecision(4);
+      std::cout << "\tpitch: " << ax << std::fixed << std::setprecision(4);
+      std::cout << "\tyaw: " << az << std::fixed << std::setprecision(4) << std::endl;
       
       prevTime = std::chrono::system_clock::now();
     }

@@ -10,7 +10,7 @@ def main():
     print(i+1, " sec")
 
   # change the reference frame to ENU frame (0 - NWU,  1 - ENU,  2 - NED)
-  eimuV2.setWorldFrameId(2)
+  eimuV2.setWorldFrameId(1)
 
   # check the reference frame the eimuV2 is working in (0 - NWU,  1 - ENU,  2 - NED)
   ref_frame_id = eimuV2.getWorldFrameId()
@@ -28,16 +28,11 @@ def main():
   while True:
     if time.time() - prevTime > sampleTime:
       try:
-        ax = eimuV2.readAcc(0)
-        ay = eimuV2.readAcc(1)
-        az = eimuV2.readAcc(2)
+        r = eimuV2.readRPY(0)
+        p = eimuV2.readRPY(1)
+        y = eimuV2.readRPY(2)
 
-        gx = eimuV2.readGyro(0)
-        gy = eimuV2.readGyro(1)
-        gz = eimuV2.readGyro(2)
-
-        print(f"ax: {ax}\tay: {ay}\taz: {az}")
-        print(f"gx: {gx}\tgy: {gy}\tgz: {gz}\n")
+        print(f"r: {r}\tp: {p}\ty: {y}")
       except:
         pass
       
